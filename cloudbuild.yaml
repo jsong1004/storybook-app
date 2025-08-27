@@ -1,0 +1,81 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        docker build \
+          -t gcr.io/myresume-457817/storybook-app:${_TAG} \
+          -t gcr.io/myresume-457817/storybook-app:latest \
+          --build-arg NEXT_PUBLIC_SUPABASE_URL=$$SUPABASE_URL \
+          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=$$SUPABASE_ANON_KEY \
+          .
+    secretEnv:
+      - 'SUPABASE_URL'
+      - 'SUPABASE_ANON_KEY'
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/myresume-457817/storybook-app:${_TAG}'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/myresume-457817/storybook-app:latest'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'storybook-app'
+      - '--image'
+      - 'gcr.io/myresume-457817/storybook-app:${_TAG}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '3000'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--set-env-vars'
+      - 'NODE_ENV=production,NEXT_PUBLIC_APP_URL=https://storybook.ai-biz.app'
+      - '--update-secrets'
+      - 'NEXT_PUBLIC_SUPABASE_URL=projects/711582759542/secrets/SUPABASE_URL:latest'
+      - '--update-secrets'
+      - 'NEXT_PUBLIC_SUPABASE_ANON_KEY=projects/711582759542/secrets/SUPABASE_ANON_KEY:latest'
+      - '--update-secrets'
+      - 'OPENROUTER_API_KEY=projects/711582759542/secrets/OPENROUTER_API_KEY:latest'
+      - '--update-secrets'
+      - 'LEONARDO_API_KEY=projects/711582759542/secrets/LEONARDO_API_KEY:latest'
+      - '--update-secrets'
+      - 'BLOB_READ_WRITE_TOKEN=projects/711582759542/secrets/BLOB_READ_WRITE_TOKEN:latest'
+
+# Map secrets to environment variables for Docker build
+availableSecrets:
+  secretManager:
+    - versionName: projects/711582759542/secrets/SUPABASE_URL/versions/latest
+      env: 'SUPABASE_URL'
+    - versionName: projects/711582759542/secrets/SUPABASE_ANON_KEY/versions/latest
+      env: 'SUPABASE_ANON_KEY'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+substitutions:
+  _TAG: 'v1.0'
+
+images:
+  - 'gcr.io/myresume-457817/storybook-app:${_TAG}'
+  - 'gcr.io/myresume-457817/storybook-app:latest'

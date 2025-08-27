@@ -1,18 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function HomePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect("/dashboard")
-  }
+export default function HomePage() {
+  // Remove server-side auth check for now - public landing page
+  // TODO: Add client-side redirect to dashboard if user is logged in
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">

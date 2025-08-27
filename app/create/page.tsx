@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+
+// Force dynamic rendering since this page requires authentication
+export const dynamic = 'force-dynamic'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DraggableImageUpload } from "@/components/draggable-image-upload"
@@ -28,6 +31,8 @@ export default function CreateStoryPage() {
   const [customizations, setCustomizations] = useState<StoryCustomizations>({})
   const [isGenerating, setIsGenerating] = useState(false)
   const router = useRouter()
+  
+  // Initialize client inside component to prevent static generation issues
   const supabase = createClient()
 
   const handleImagesUploaded = (images: UploadedImage[]) => {
